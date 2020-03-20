@@ -13,17 +13,15 @@ import javax.swing.UIManager;
 /**
  * This {@code Minesweeper} class initializes the logic for the game of Minesweeper.
  * 
- * @version 16 March 2020
+ * @version 20 March 2020
  * @author MrPineapple065
  */
 public class Minesweeper {
 	public static void main(String[] args) {
-		JFrame frame = new JFrame("Chess");
+		JFrame frame = new JFrame("Minesweeper");
 		frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
 		
 		MinesweeperPanel panel = null;
-		
-		frame.pack();
 		
 		switch (JOptionPane.showOptionDialog(null, "Choose Dificulty", "", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[] {"Easy", "Medium", "Hard", "Custom", "Cancel" },  2)) {
 		
@@ -88,7 +86,8 @@ public class Minesweeper {
 			System.exit(0);
 		}
 		
-		frame.setSize(panel.getBoard().getColMax() * 75, (panel.getBoard().getRowMax() + 1 ) * 75);
+		frame.pack();
+		frame.setSize(panel.getBoard().getColMax() * 50, (panel.getBoard().getRowMax() + 1 ) * 50);
 		frame.setResizable(false);
 		frame.setLocationRelativeTo(null);
 		frame.setVisible(true);

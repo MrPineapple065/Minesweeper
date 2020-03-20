@@ -1,23 +1,27 @@
 import java.awt.Color;
 import java.awt.Font;
+import java.awt.Image;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
+import java.io.File;
+import java.io.IOException;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JOptionPane;
-import javax.swing.JTextArea;
 import javax.swing.UIManager;
 
 /**
  * This {@code Tile} class represents a Tile on {@link MinesweeperBoard}.
  * 
- * @version 16 March 2020
+ * @version 20 March 2020
  * @author MrPineapple065
  */
-public class Tile extends JButton implements KeyListener, MouseListener {
+public class Tile extends JButton implements MouseListener, KeyListener {
 	/**
 	 * serialVersionUID
 	 */
@@ -26,17 +30,22 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	/**
 	 * A {@link Arrays} of {@link Color} holding all the colors that this will be.
 	 */
-	private static final Color[] numColor = new Color[] {null, new Color(0x0000FF), new Color(0x008000), new Color(0xFF0000), new Color(0x000082), new Color(0x820000), new Color(0x008080), Color.BLACK, new Color(0x808080)};
-	
-	/**
-	 * The {@link MinesweeperBoard} holding this.
-	 */
-	private final MinesweeperBoard board;
+	public static final Color[] numColor = new Color[] {null, new Color(0x0000FF), new Color(0x008000), new Color(0xFF0000), new Color(0x000082), new Color(0x820000), new Color(0x008080), Color.BLACK, new Color(0x808080)};
 	
 	/**
 	 * The {@link Color} of this.
 	 */
-	private final Color tileColor = new Color(0xBDBDBD);
+	private static final Color tileColor = new Color(0xBDBDBD);
+	
+	/**
+	 * A {@link ImageIcon} holding the {@code ImageIcon} for the flag.
+	 */
+	private static ImageIcon flag;
+	
+	/**
+	 * A {@link ImageIcon} holding the {@code ImageIcon} for the bomb.
+	 */
+	private static ImageIcon bomb;
 	
 	/**
 	 * The {@link MinesweeperPanel} holding this.
@@ -73,66 +82,54 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	 */
 	private boolean isRevealed;
 	
+	static {
+		try {
+			Tile.flag = new ImageIcon(ImageIO.read(new File("flag.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.bomb = new ImageIcon(ImageIO.read(new File("bomb.png")));
+		}
+		
+		catch (IOException ioe) {
+			ioe.printStackTrace();
+		}
+	}
+	
 	/**
-	 * Creates a {@code Tile} with row, col, board, and panel defined.
+	 * Creates a {@code Tile} with row, col, panel.getBoard(), and panel defined.
 	 * 
 	 * @param row	is the {@link Tile#row}
 	 * @param col	is the {@link Tile#col}
-	 * @param board is the {@link Tile#board}
-	 * @param panel is the {@link Tile#panel}
 	 * 
-	 * @throws IndexOutOfBoundsException if {@code row} and {@code col} are outside the board.
-	 * @throws IllegalArgumentException if {@code board} and {@code panel} are {@code null}.
 	 */
-	public Tile(int row, int col, MinesweeperBoard board, MinesweeperPanel panel) throws IndexOutOfBoundsException, IllegalArgumentException {
+	public Tile(MinesweeperPanel panel, int row, int col) {
 		super(null, null);
 		
-		if (board  == null) {
-			throw new IllegalArgumentException("Tile must be created on a MinesweeperBoard.");
-		}
-		
-		else {
-			this.board = board;
-		}
-		
 		if (panel == null) {
-			throw new IllegalArgumentException("Tile must be created on a MinesweeperPanel.");
+			throw new IllegalArgumentException("Tile must be on MinesweeperPanel");
 		}
 		
 		else {
 			this.panel = panel;
 		}
 		
-		if (! this.board.validateRow(row)) {
-			throw new IndexOutOfBoundsException(String.format("Illegal row: %s", row));
-		}
-		
-		else {
-			this.row = row;
-		}
-		
-		if (! this.board.validateCol(col)) {
-			throw new IndexOutOfBoundsException(String.format("Illegal column: %s.", col));
-		}
-		
-		else {
-			this.col = col;
-		}
+		this.row = row; this.col = col;
 		
 		//Set Default GUI Elements
 		this.setFont(new Font("", Font.PLAIN, 30));		this.setBorder(BorderFactory.createRaisedBevelBorder());
-		this.setBackground(this.tileColor);				this.setForeground(null);
 		this.setHorizontalAlignment(JButton.CENTER);	this.setVerticalAlignment(JButton.CENTER);
 		this.setFocusPainted(false);
 		
 		UIManager.put("TextArea.font", new Font("Arial", Font.PLAIN, 30));
 		
+		this.reset();
+		
 		//Add Interactivity
-		this.addKeyListener(this);	this.addMouseListener(this);
+		this.addKeyListener(this); this.addMouseListener(this);
 		this.setFocusable(true);
 		this.requestFocusInWindow();
-		
-		this.isFlagged = false; this.isBomb = false; this.isRevealed = false;
+	}
+	
+	public static ImageIcon getBombIcon() {
+		return Tile.bomb;
 	}
 	
 	/**
@@ -168,13 +165,13 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	 * @return {@link Tile#tileColor}
 	 */
 	public Color getTileColor() {
-		return this.tileColor;
+		return Tile.tileColor;
 	}
 	
 	/**
 	 * Determine the row that this is in.
 	 * 
-	 * @return {@link Tile#row}
+	 * @return {@link #row}
 	 */
 	public int getRow() {
 		return this.row;
@@ -183,11 +180,21 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	/**
 	 * Determine the column that this is in.
 	 * 
-	 * @return {@link col}
+	 * @return {@link #col}
 	 */
 	public int getCol() {
 		return this.col;
 	}
+	
+	/**
+	 * Determine the number of bombs surrounding this.
+	 * 
+	 * @return {@link #count}
+	 */
+	public int getCount() {
+		return this.count;
+	}
+	
 	
 	/**
 	 * Set {@link #isFlagged} to {@code isFlagged}
@@ -223,99 +230,13 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 		this.isRevealed = isRevealed;
 	}
 	
-	public void setCount() {
-		int count = 0;
-		for (int i = this.row - 1; i < this.row + 2; i++) {
-			for (int j = this.col - 1; j < this.col + 2; j++) {
-				try {
-					count += this.board.getTile(i, j).isBomb() ? 1 : 0;
-				}
-				
-				catch (ArrayIndexOutOfBoundsException aiooe) {
-					continue;
-				}
-			}
-		}
-		
-		this.count = count;
-	}
-	
 	/**
-	 * Reveal {@code this}. </br>
-	 * Revealing a {@link Tile} either results in gameover or a</br>
-	 * number indicating the number of bombs directly surrounding {@code this}.
+	 * Set {@link #count}
+	 * 
+	 * @return {@link #count}
 	 */
-	public void reveal() {
-		if (this.isFlagged) {
-			return;
-		}
-		
-		if (this.isRevealed) {
-			return;
-		}
-		
-		if (this.board.getGameOver()) {
-			return;
-		}
-		
-		this.setRevealed(true);
-		this.board.incTileReveal();
-		this.setBorder(BorderFactory.createLoweredBevelBorder());
-		
-		if (this.isBomb()) {
-			JOptionPane.showMessageDialog(null, "Game Over", "Game Over!", JOptionPane.PLAIN_MESSAGE, null);
-			this.revealBomb();
-			return;
-		}
-		
-		if (this.count != 0) {
-			this.setText(String.valueOf(this.count));
-			this.setForeground(Tile.numColor[this.count]);
-		}
-		
-		else {
-			this.specialReveal();
-		}
-		
-		this.checkGameOver();
-	}
-	
-	/**
-	 * Reveal all {@link Tile} directly surrounding <code>this</code>.
-	 */
-	public void specialReveal() {
-		for (int i = this.row - 1; i < this.row + 2; i++) {
-			for (int j = this.col - 1; j < this.col + 2; j++) {
-				try {
-					if (! (this.row == i && this.col == j)) {
-						this.board.getBoard()[i][j].reveal();
-					}
-				}
-				
-				catch (ArrayIndexOutOfBoundsException aiooe) {
-					continue;
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Reveals the locations of all bombs on {@link MinesweeperBoard#getBoard()}
-	 */
-	public void revealBomb() {
-		for (Tile[] row : this.board.getBoard()) {
-			for (Tile tile : row) {
-				tile.removeMouseListener(tile);
-				if (tile.isBomb()) {
-					tile.setBackground(Color.RED);
-				}
-				
-				else {
-					continue;
-				}
-			}
-		}
-		return;
+	public int setCount(int count) {
+		this.count = count; return this.count;
 	}
 	
 	/**
@@ -323,39 +244,19 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	 */
 	public void reset() {
 		this.setBorder(BorderFactory.createRaisedBevelBorder());
-		this.setFlagged(false); this.setRevealed(false); this.setBomb(false);
-		this.setText(null); this.setForeground(null); this.setBackground(this.tileColor);
-		this.addMouseListener(this); this.addKeyListener(this);
-	}
-	
-	/**
-	 * Checks if the game is over.
-	 */
-	private void checkGameOver() {
-		if (! this.board.getGameOver()) {
-			if (this.board.getRevealableTile() == this.board.getNumReveal()) {
-				JTextArea jta = new JTextArea("You Win!\n" + this.panel.getTimeLabel().getText());
-				JOptionPane.showMessageDialog(null, jta, "", JOptionPane.PLAIN_MESSAGE, null);
-				this.board.setGameOver(true);
-			}
-		}
-	}
-	
-	@Override
-	public String toString() {
-		return String.format("(%s, %s)", String.valueOf(this.row), String.valueOf(this.col));
+		this.isFlagged = false; this.isBomb = false; this.isRevealed = false;
+		this.setText(null); this.setIcon(null); this.setForeground(null); this.setBackground(Tile.tileColor);
 	}
 	
 	@Override
 	public int hashCode() {
 		final int prime = 31;
 		int result = 1;
-		result = prime * result + ((board == null) ? 0 : board.hashCode());
 		result = prime * result + col;
+		result = prime * result + count;
 		result = prime * result + (isBomb ? 1231 : 1237);
 		result = prime * result + (isFlagged ? 1231 : 1237);
 		result = prime * result + (isRevealed ? 1231 : 1237);
-		result = prime * result + ((panel == null) ? 0 : panel.hashCode());
 		result = prime * result + row;
 		result = prime * result + ((tileColor == null) ? 0 : tileColor.hashCode());
 		return result;
@@ -367,17 +268,12 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 			return true;
 		if (obj == null)
 			return false;
-		if (this.getClass() != obj.getClass())
+		if (getClass() != obj.getClass())
 			return false;
-		
 		Tile other = (Tile) obj;
-		
-		if (this.board == null) {
-			if (other.board != null)
-				return false;
-		} else if (!this.board.equals(other.board))
-			return false;
 		if (col != other.col)
+			return false;
+		if (count != other.count)
 			return false;
 		if (isBomb != other.isBomb)
 			return false;
@@ -385,42 +281,36 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 			return false;
 		if (isRevealed != other.isRevealed)
 			return false;
-		if (panel == null) {
-			if (other.panel != null)
-				return false;
-		} else if (!panel.equals(other.panel))
-			return false;
 		if (row != other.row)
-			return false;
-		if (tileColor == null) {
-			if (other.tileColor != null)
-				return false;
-		} else if (!tileColor.equals(other.tileColor))
 			return false;
 		return true;
 	}
 	
+	@Override
+	public String toString() {
+		return String.format("(%s, %s)", String.valueOf(this.row), String.valueOf(this.col));
+	}
+
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		switch (e.getButton()) {
 		
 		/**Left Click*/
 		case MouseEvent.BUTTON1:
-			this.reveal();
+			this.panel.getBoard().reveal(this);
 			break;
 			
 		/**Middle Clicl*/
 		case MouseEvent.BUTTON2:
 			String tileText = this.getText();
-			
 			if (("".equals(tileText)) || ! ((this.toString()).equals(tileText))) {
 				this.setForeground(new Color(0x333333));
 				this.setText(this.toString());
 			}
 			
 			else {
-				this.setForeground(Tile.numColor[this.count]);
-				this.setText(String.valueOf(this.count));
+				this.setForeground(this.count == 0 ? null : Tile.numColor[this.count]);
+				this.setText(this.count == 0 ? null : String.valueOf(this.count));
 			}
 			break;
 			
@@ -431,15 +321,20 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 				break;
 			}
 			
+			if (this.panel.getBoard().getGameOver()) {
+				break;
+			}
+			
 			if (this.isFlagged) {
-				this.setText("");
+				this.setIcon(null);
 				this.setForeground(null);
+				this.panel.getBoard().incFlagCount();
 				this.toggleFlagged();
 			}
 			
 			else {
-				this.setText("\u2691");
-				this.setForeground(Color.RED);
+				this.setIcon(flag);
+				this.panel.getBoard().decFlagCount();
 				this.toggleFlagged();
 			}
 			break;
@@ -449,37 +344,33 @@ public class Tile extends JButton implements KeyListener, MouseListener {
 	@Override
 	public void mousePressed(MouseEvent e) {
 		this.getModel().setPressed(true);
+		this.panel.m.click();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
 		this.getModel().setPressed(false);
+		this.panel.m.click();
 	}
 
 	@Override
-	public void mouseEntered(MouseEvent e) {this.setBorder(BorderFactory.createLineBorder(Color.CYAN, 3));}
+	public void mouseEntered(MouseEvent e)	{return;}
 
 	@Override
-	public void mouseExited(MouseEvent e) {
-		if (this.isRevealed)
-			this.setBorder(BorderFactory.createLoweredBevelBorder());
-		
-		else
-			this.setBorder(BorderFactory.createRaisedBevelBorder());
-	}
+	public void mouseExited(MouseEvent e)	{return;}
 
 	@Override
 	public void keyTyped(KeyEvent e) {
 		switch (e.getKeyChar()) {
 		case KeyEvent.VK_ESCAPE:
-			this.panel.actionPerformed(null);
+			this.panel.m.actionPerformed(null);
 			break;
 			
 		case 'r':
 			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to reset?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
 			
 			case JOptionPane.YES_OPTION:
-				this.board.newGame();
+				this.panel.getBoard().reset();
 				break;
 				
 			default:
