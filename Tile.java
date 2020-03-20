@@ -78,7 +78,7 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	private boolean isBomb;
 	
 	/**
-	 * A {@code boolean} determininf if this is revealed
+	 * A {@code boolean} determining if this is revealed
 	 */
 	private boolean isRevealed;
 	
