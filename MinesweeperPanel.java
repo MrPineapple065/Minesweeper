@@ -6,6 +6,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.swing.ImageIcon;
@@ -19,7 +20,7 @@ import javax.swing.UIManager;
 /**
  * This {@code MinesweeperPanel} class holds all interactable and GUI elements of {@link Minesweeper}.
  * 
- * @version 20 March 2020
+ * @version 3 April 2020
  * @author MrPineapple065
  */
 public class MinesweeperPanel extends JPanel {
@@ -54,9 +55,9 @@ public class MinesweeperPanel extends JPanel {
 	private MinesweeperBoard board;
 	
 	/**
-	 * Create a {@link MinesweeperPanel} with <code>row</code> number of rows, </br>
-	 * <code>col</code> number of columns, </br>
-	 * and <code>numBombs</code> bombs.
+	 * Create a {@link MinesweeperPanel} with {@code row} number of rows, <br>
+	 * {@code col} number of columns, <br>
+	 * and {@code numBombs} bombs.
 	 * 
 	 * @param row		is the number of rows.
 	 * @param col		is the number of columns.
@@ -109,7 +110,29 @@ public class MinesweeperPanel extends JPanel {
 	}
 	
 	/**
-	 * Updates {@link #bombLabel} to display the number of bombs left to flag.
+	 * Determine if {@code row} is in bounds.
+	 * 
+	 * @param row is the row number.
+	 * @return	{@code true} if row is in bounds. <br>
+	 * 			{@code false} if row is not in bounds.
+	 */
+	public boolean validateRow(int row) {
+		return 0 <= row && row < this.board.getRowMax();
+	}
+	
+	/**
+	 * Determine if {@code col} is in bounds.
+	 * 
+	 * @param col is the column number.
+	 * @return	{@code true} if col is in bounds. <br>
+	 * 			{@code false} if col is not in bounds.
+	 */
+	public boolean validateCol(int col) {
+		return 0 <= col && col < this.board.getRowMax();
+	}
+	
+	/**
+	 * Updates {@link #flagLabel} to display the number of bombs left to flag.
 	 */
 	public void updateBLabel() {
 		this.flagLabel.setText(String.valueOf(this.board.getFlags()));
@@ -127,7 +150,7 @@ public class MinesweeperPanel extends JPanel {
 	}
 	
 	/**
-	 * Create {@link JLabels} and add them to the {@link MinesweeperPanel}
+	 * Create {@link JLabel} and add them to the {@link MinesweeperPanel}
 	 */
 	private void createLabels() {
 		this.updateBLabel();
@@ -176,36 +199,37 @@ public class MinesweeperPanel extends JPanel {
 		private static final long serialVersionUID = 0x3EEF5D22FB602996L;
 		
 		/**
+		 * A {@link Function} to convert an inputed {@link File} to a {@link ImageIcon}
+		 */
+		private static final Function<String, ImageIcon> f = str -> {
+			try {
+				return new ImageIcon(ImageIO.read(new File(str)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			} catch (IOException e) {
+				e.printStackTrace();
+				System.exit(0);
+				return null;
+			}
+		};
+		
+		/**
 		 * A {@link ImageIcon} holding the default {@code ImageIcon}
 		 */
-		public static ImageIcon menuDefault		= null;
+		public static final ImageIcon menuDefault 	= f.apply("menuDefault.png");
 		
 		/**
 		 * A {@link ImageIcon} holding the {@code ImageIcon} to display when {@code Mouse} is pressed.
 		 */
-		public static ImageIcon menuClick		= null;
+		public static final ImageIcon menuClick		= f.apply("menuClick.png");
 		
 		/**
 		 * A {@link ImageIcon} holding the {@code ImageIcon} to display when the game is over.
 		 */
-		public static ImageIcon menuGameOver	= null;
+		public static final ImageIcon menuGameOver	= f.apply("menuGameOver.png");
 		
 		/**
 		 * The {@link MinesweeperPanel} holding this.
 		 */
 		private final MinesweeperPanel panel;
-		
-		static {
-			try {
-				MenuButton.menuDefault	= new ImageIcon(ImageIO.read(new File("menuDefault.png" )).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-				MenuButton.menuClick	= new ImageIcon(ImageIO.read(new File("menuClick.png"   )).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-				MenuButton.menuGameOver	= new ImageIcon(ImageIO.read(new File("menuGameOver.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			}
-			
-			catch (IOException ioe) {
-				ioe.printStackTrace();
-			}
-		}
 		
 		/**
 		 * Create {@code MenuButton} on {@code panel}
@@ -226,27 +250,30 @@ public class MinesweeperPanel extends JPanel {
 			}
 			
 			this.reset();
+			this.setHorizontalAlignment(JButton.CENTER); this.setVerticalAlignment(JButton.CENTER);
 			this.setFocusPainted(false);
 			this.addActionListener(this);
 			this.setOpaque(false);
 			this.setContentAreaFilled(false);
-		
 		}
 		
+		/**
+		 * Change the icon displyed to {@link #menuClick}
+		 */
 		public void click() {
-			if (this.getIcon().equals(menuDefault)) {
-				this.setIcon(menuClick);
-			}
-			
-			else {
-				this.reset();
-			}
+			this.setIcon(menuClick);
 		}
 		
+		/**
+		 * Change the icon displayed to {@link #menuDefault}
+		 */
 		public void reset() {
 			this.setIcon(menuDefault);
 		}
 		
+		/**
+		 * Change the icon displayed to {@link #menuGameOver}
+		 */
 		public void gameOver() {
 			this.setIcon(menuGameOver);
 		}

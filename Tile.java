@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.function.Function;
 
 import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
@@ -18,7 +19,7 @@ import javax.swing.UIManager;
 /**
  * This {@code Tile} class represents a Tile on {@link MinesweeperBoard}.
  * 
- * @version 20 March 2020
+ * @version 3 April 2020
  * @author MrPineapple065
  */
 public class Tile extends JButton implements MouseListener, KeyListener {
@@ -28,24 +29,42 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	private static final long serialVersionUID = 0x448000763278F6FAL;
 	
 	/**
-	 * A {@link Arrays} of {@link Color} holding all the colors that this will be.
+	 * A {@code Array} of {@link ImageIcon} holding all the {@code ImageIcon} that this will display.
 	 */
-	public static final Color[] numColor = new Color[] {null, new Color(0x0000FF), new Color(0x008000), new Color(0xFF0000), new Color(0x000082), new Color(0x820000), new Color(0x008080), Color.BLACK, new Color(0x808080)};
+	public static final ImageIcon[] numbers = new ImageIcon[9];
 	
 	/**
-	 * The {@link Color} of this.
+	 * A {@link Function} to convert an inputed {@link String} to a {@link ImageIcon}.
 	 */
-	private static final Color tileColor = new Color(0xBDBDBD);
-	
-	/**
-	 * A {@link ImageIcon} holding the {@code ImageIcon} for the flag.
-	 */
-	private static ImageIcon flag;
+	private static final Function<String, ImageIcon> f = str -> {
+		try {
+			return new ImageIcon(ImageIO.read(new File(str)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		} catch (IOException e) {
+			e.printStackTrace();
+			System.exit(0);
+			return null;
+		}
+	};
 	
 	/**
 	 * A {@link ImageIcon} holding the {@code ImageIcon} for the bomb.
 	 */
-	private static ImageIcon bomb;
+	public static final ImageIcon	bomb			= f.apply("bomb.png");
+	
+	/**
+	 * A {@link ImageIcon} holding the {@code ImageIcon} for an incorrectly flagged {@link Tile}.
+	 */
+	public static final ImageIcon	incorrectFlag	= f.apply("incorrectFlag.png");
+	
+	/**
+	 * A {@link ImageIcon} holding the {@code ImageIcon} for the flag.
+	 */
+	private static final ImageIcon	flag			= f.apply("flag.png");
+	
+	/**
+	 * A reference holding a {@link Color} that every Tile will be.
+	 */
+	private static final Color		color = new Color(0xBDBDBD);
 	
 	/**
 	 * The {@link MinesweeperPanel} holding this.
@@ -78,47 +97,51 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	private boolean isBomb;
 	
 	/**
-	 * A {@code boolean} determining if this is revealed
+	 * A {@code boolean} determininf if this is revealed
 	 */
 	private boolean isRevealed;
 	
 	static {
+		UIManager.put("TextArea.font"		, new Font("Arial", Font.PLAIN, 30));
 		try {
-			Tile.flag = new ImageIcon(ImageIO.read(new File("flag.png")).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.bomb = new ImageIcon(ImageIO.read(new File("bomb.png")));
+			Tile.numbers[1] = new ImageIcon(ImageIO.read(new File("one.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[2] = new ImageIcon(ImageIO.read(new File("two.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[3] = new ImageIcon(ImageIO.read(new File("three.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[4] = new ImageIcon(ImageIO.read(new File("four.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[5] = new ImageIcon(ImageIO.read(new File("five.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[6] = new ImageIcon(ImageIO.read(new File("six.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[7] = new ImageIcon(ImageIO.read(new File("seven.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[8] = new ImageIcon(ImageIO.read(new File("eight.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
 		}
 		
 		catch (IOException ioe) {
 			ioe.printStackTrace();
+			System.exit(0);
 		}
 	}
 	
 	/**
 	 * Creates a {@code Tile} with row, col, panel.getBoard(), and panel defined.
 	 * 
+	 * @param panel is the {@link MinesweeperPanel} holding this.
 	 * @param row	is the {@link Tile#row}
 	 * @param col	is the {@link Tile#col}
-	 * 
 	 */
 	public Tile(MinesweeperPanel panel, int row, int col) {
 		super(null, null);
 		
-		if (panel == null) {
+		if (panel == null)
 			throw new IllegalArgumentException("Tile must be on MinesweeperPanel");
-		}
 		
-		else {
+		else
 			this.panel = panel;
-		}
 		
 		this.row = row; this.col = col;
 		
 		//Set Default GUI Elements
-		this.setFont(new Font("", Font.PLAIN, 30));		this.setBorder(BorderFactory.createRaisedBevelBorder());
+		this.setBorder(BorderFactory.createRaisedBevelBorder());
 		this.setHorizontalAlignment(JButton.CENTER);	this.setVerticalAlignment(JButton.CENTER);
 		this.setFocusPainted(false);
-		
-		UIManager.put("TextArea.font", new Font("Arial", Font.PLAIN, 30));
 		
 		this.reset();
 		
@@ -126,10 +149,6 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 		this.addKeyListener(this); this.addMouseListener(this);
 		this.setFocusable(true);
 		this.requestFocusInWindow();
-	}
-	
-	public static ImageIcon getBombIcon() {
-		return Tile.bomb;
 	}
 	
 	/**
@@ -157,15 +176,6 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	 */
 	public boolean isRevealed() {
 		return this.isRevealed;
-	}
-	
-	/**
-	 * Determine the {@link Color} of this.
-	 * 
-	 * @return {@link Tile#tileColor}
-	 */
-	public Color getTileColor() {
-		return Tile.tileColor;
 	}
 	
 	/**
@@ -233,7 +243,9 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	/**
 	 * Set {@link #count}
 	 * 
-	 * @return {@link #count}
+	 * @param count is the new {@code count}.
+	 * 
+	 * @return the new value.
 	 */
 	public int setCount(int count) {
 		this.count = count; return this.count;
@@ -245,7 +257,7 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	public void reset() {
 		this.setBorder(BorderFactory.createRaisedBevelBorder());
 		this.isFlagged = false; this.isBomb = false; this.isRevealed = false;
-		this.setText(null); this.setIcon(null); this.setForeground(null); this.setBackground(Tile.tileColor);
+		this.setIcon(null);	this.setBackground(color);
 	}
 	
 	@Override
@@ -257,35 +269,48 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 		result = prime * result + (isBomb ? 1231 : 1237);
 		result = prime * result + (isFlagged ? 1231 : 1237);
 		result = prime * result + (isRevealed ? 1231 : 1237);
+		result = prime * result + ((panel == null) ? 0 : panel.hashCode());
 		result = prime * result + row;
-		result = prime * result + ((tileColor == null) ? 0 : tileColor.hashCode());
 		return result;
 	}
-
+	
 	@Override
 	public boolean equals(Object obj) {
-		if (this == obj)
+		if (this == obj) {
 			return true;
-		if (obj == null)
+		}
+		if (!(obj instanceof Tile)) {
 			return false;
-		if (getClass() != obj.getClass())
-			return false;
+		}
 		Tile other = (Tile) obj;
-		if (col != other.col)
+		if (col != other.col) {
 			return false;
-		if (count != other.count)
+		}
+		if (count != other.count) {
 			return false;
-		if (isBomb != other.isBomb)
+		}
+		if (isBomb != other.isBomb) {
 			return false;
-		if (isFlagged != other.isFlagged)
+		}
+		if (isFlagged != other.isFlagged) {
 			return false;
-		if (isRevealed != other.isRevealed)
+		}
+		if (isRevealed != other.isRevealed) {
 			return false;
-		if (row != other.row)
+		}
+		if (panel == null) {
+			if (other.panel != null) {
+				return false;
+			}
+		} else if (!panel.equals(other.panel)) {
 			return false;
+		}
+		if (row != other.row) {
+			return false;
+		}
 		return true;
 	}
-	
+
 	@Override
 	public String toString() {
 		return String.format("(%s, %s)", String.valueOf(this.row), String.valueOf(this.col));
@@ -309,7 +334,7 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 			}
 			
 			else {
-				this.setForeground(this.count == 0 ? null : Tile.numColor[this.count]);
+				this.setIcon(this.count == 0 ? null : Tile.numbers[this.count]);
 				this.setText(this.count == 0 ? null : String.valueOf(this.count));
 			}
 			break;
@@ -317,13 +342,11 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 			
 		/**Right Click*/
 		case MouseEvent.BUTTON3:
-			if (this.isRevealed) {
+			if (this.isRevealed)
 				break;
-			}
 			
-			if (this.panel.getBoard().getGameOver()) {
+			if (this.panel.getBoard().getGameOver())
 				break;
-			}
 			
 			if (this.isFlagged) {
 				this.setIcon(null);
@@ -343,14 +366,20 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 
 	@Override
 	public void mousePressed(MouseEvent e) {
+		if (this.panel.getBoard().getGameOver())
+			return;
+		
 		this.getModel().setPressed(true);
 		this.panel.m.click();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
+		if (this.panel.getBoard().getGameOver())
+			return;
+		
 		this.getModel().setPressed(false);
-		this.panel.m.click();
+		this.panel.m.reset();
 	}
 
 	@Override
@@ -370,6 +399,7 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to reset?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
 			
 			case JOptionPane.YES_OPTION:
+				this.panel.m.reset();
 				this.panel.getBoard().reset();
 				break;
 				

@@ -12,7 +12,7 @@ import javax.swing.JTextArea;
 /**
  * <p>This {@code MinesweeperBoard} class is the Minesweeper Board.</p>
  * 
- * @version 20 March 2020
+ * @version 3 April 2020
  * @author MrPineapple065
  */
 public class MinesweeperBoard {
@@ -47,7 +47,7 @@ public class MinesweeperBoard {
 	private final MinesweeperPanel panel;
 	
 	/**
-	 * An 2D {@link Arrays} of {@link Tile}
+	 * An 2D {@code Array} of {@link Tile}
 	 */
 	private final Tile[][] board;
 	
@@ -67,7 +67,7 @@ public class MinesweeperBoard {
 	private int numReveal;
 	
 	/**
-	 * The number of bombs left to flag. </br>
+	 * The number of bombs left to flag. <br>
 	 * This number can go negative, signifying there are more flags then there are bombs.
 	 */
 	private int numFlag;
@@ -75,6 +75,7 @@ public class MinesweeperBoard {
 	/**
 	 * Creates a {@code MinesweeperBoard} initialising all atributes.
 	 * 
+	 * @param panel		is the {@link MinesweeperPanel}
 	 * @param rowMax	is the maximum number of rows.
 	 * @param colMax	is the maximum number of columns.
 	 * @param numBombs	is the number of bombs on the board.
@@ -83,38 +84,30 @@ public class MinesweeperBoard {
 	 * @throws IllegalArgumentException		if {@code panel} is {@code null} or is {@code numBombs} is greater ({@code rowMax} * {@code colMax} - 1) or less than 1.
 	 */
 	public MinesweeperBoard(MinesweeperPanel panel, int rowMax, int colMax, int numBombs) throws IndexOutOfBoundsException, IllegalArgumentException {
-		if (panel == null) {
+		if (panel == null)
 			throw new IllegalArgumentException("MinesweeperBoard must be on MinesweeperPanel");
-		}
 		
-		else {
+		else
 			this.panel = panel;
-		}
 		
 		
-		if (rowMax < 3) {
+		if (rowMax < 3)
 			throw new IndexOutOfBoundsException("Illegal maximum number of rows: " + rowMax);
-		}
 		
-		else {
+		else
 			this.rowMax = rowMax;
-		}
 		
-		if (colMax < 3) {
+		if (colMax < 3)
 			throw new IndexOutOfBoundsException("Illegal maximun number of columns: " + colMax);
-		}
 		
-		else {
+		else
 			this.colMax = rowMax;
-		}
 		
-		if (numBombs > this.rowMax * this.colMax - 1 || numBombs < 1) {
+		if (numBombs > this.rowMax * this.colMax - 1 || numBombs < 1)
 			throw new IllegalArgumentException("Illegal number of bombs: " + numBombs);
-		}
 		
-		else {
+		else
 			this.numBombs = numBombs;
-		}
 		
 		this.revealableTile = (this.rowMax * this.colMax) - this.numBombs;
 		
@@ -125,13 +118,17 @@ public class MinesweeperBoard {
 	}
 	
 	/**
-	 * @return {@link board}.
+	 * Returns {@link #board}
+	 * 
+	 * @return {@code board}.
 	 */
 	public Tile[][] getBoard() {
 		return this.board;
 	}
 	
 	/**
+	 * Returns {@link Tile} of {@link #board} located at ({@code row}, {@code col}).
+	 * 
 	 * @param row is the row of {@code Tile}
 	 * @param col is the column of {@code Tile}
 	 * @return {@link Tile} at position ({@code row}, {@code col}).
@@ -141,6 +138,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine the maximum number of rows.
+	 * 
 	 * @return {@link #rowMax}
 	 */
 	public int getRowMax() {
@@ -148,6 +147,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine the maximum number of columns.
+	 * 
 	 * @return {@link #colMax}
 	 */
 	public int getColMax() {
@@ -155,6 +156,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine the number of {@link Tile} that can be revealed.
+	 * 
 	 * @return {@link #revealableTile}
 	 */
 	public int getRevealableTile() {
@@ -162,6 +165,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine the number of {@link Tile} that have been revealed.
+	 * 
 	 * @return {@link #numReveal}
 	 */
 	public int getNumReveal() {
@@ -169,6 +174,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine the number of {@link Tile} that have been flagged.
+	 * 
 	 * @return {@link #numFlag}
 	 */
 	public int getFlags() {
@@ -176,6 +183,8 @@ public class MinesweeperBoard {
 	}
 	
 	/**
+	 * Determine if the game is over.
+	 * 
 	 * @return {@link #isGameOver}
 	 */
 	public boolean getGameOver() {
@@ -279,8 +288,7 @@ public class MinesweeperBoard {
 		this.updateTileReveal();
 		
 		if (this.count(tile) != 0) {
-			tile.setText(String.valueOf(tile.getCount()));
-			tile.setForeground(Tile.numColor[tile.getCount()]);
+			tile.setIcon(Tile.numbers[tile.getCount()]);
 		}
 		
 		else {
@@ -342,11 +350,16 @@ public class MinesweeperBoard {
 	private void revealBomb() {
 		this.isGameOver = true;
 		this.panel.m.gameOver();
-		ImageIcon bombIcon = Tile.getBombIcon();
+		ImageIcon bombIcon	= Tile.bomb;
+		ImageIcon inc		= Tile.incorrectFlag;
 		for (Tile[] row : this.board) {
 			for (Tile tile : row) {
 				if (tile.isBomb()) {
-					tile.setIcon(bombIcon);;
+					tile.setIcon(bombIcon);
+				}
+				
+				if (tile.isFlagged() && ! tile.isBomb()) {
+					tile.setIcon(inc);
 				}
 				
 				else {
@@ -506,7 +519,7 @@ public class MinesweeperBoard {
 		/**
 		 * Create a {@code Mtimer} with {@code name}
 		 * 
-		 * @param  the name of the associated thread
+		 * @param  name the name of the associated thread
 		 * 
 		 * @throws NullPointerException if {@link Timer#Timer(String)} throws
 		 */

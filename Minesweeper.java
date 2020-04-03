@@ -13,7 +13,7 @@ import javax.swing.UIManager;
 /**
  * This {@code Minesweeper} class initializes the logic for the game of Minesweeper.
  * 
- * @version 20 March 2020
+ * @version 3 April 2020
  * @author MrPineapple065
  */
 public class Minesweeper {
