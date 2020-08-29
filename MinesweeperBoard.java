@@ -1,5 +1,6 @@
 import java.awt.Color;
 import java.util.Arrays;
+import java.util.Objects;
 import java.util.Random;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -16,6 +17,37 @@ import javax.swing.JTextArea;
  * @author MrPineapple065
  */
 public class MinesweeperBoard {
+	/**
+	 * This {@code MTimer} class is a private class that handles the {@link Timer}.
+	 * 
+	 * @version 18 March 2020
+	 * @author MrPineapple065
+	 */
+	private class MTimer extends Timer {
+		/**
+		 * The amount of seconds that have elapsed since the start of the timer.
+		 */
+		public int time;
+		
+		/**
+		 * A boolean determining if this is running.
+		 */
+		public boolean isRunning;
+		
+		/**
+		 * Create a {@code Mtimer} with {@code name}
+		 * 
+		 * @param  name the name of the associated thread
+		 * 
+		 * @throws NullPointerException if {@link Timer#Timer(String)} throws
+		 */
+		public MTimer(String name) throws NullPointerException {
+			super(name);
+			this.time = 0;
+			this.isRunning = false;
+		}
+	}
+	
 	/**
 	 * {@link Random}
 	 */
@@ -80,41 +112,97 @@ public class MinesweeperBoard {
 	 * @param colMax	is the maximum number of columns.
 	 * @param numBombs	is the number of bombs on the board.
 	 * 
-	 * @throws IndexOutOfBoundsException	if {@code rowMax} is less than 1 or {@code colMax} is less than 3.
+	 * @throws IndexOutOfBoundsException	if {@code rowMax} is less than 3 or {@code colMax} is less than 3.
 	 * @throws IllegalArgumentException		if {@code panel} is {@code null} or is {@code numBombs} is greater ({@code rowMax} * {@code colMax} - 1) or less than 1.
 	 */
 	public MinesweeperBoard(MinesweeperPanel panel, int rowMax, int colMax, int numBombs) throws IndexOutOfBoundsException, IllegalArgumentException {
-		if (panel == null)
-			throw new IllegalArgumentException("MinesweeperBoard must be on MinesweeperPanel");
-		
-		else
-			this.panel = panel;
-		
-		
-		if (rowMax < 3)
-			throw new IndexOutOfBoundsException("Illegal maximum number of rows: " + rowMax);
-		
-		else
-			this.rowMax = rowMax;
-		
-		if (colMax < 3)
-			throw new IndexOutOfBoundsException("Illegal maximun number of columns: " + colMax);
-		
-		else
-			this.colMax = rowMax;
-		
+		this.panel = Objects.requireNonNull(panel, "MinesweeperBoard must be on MinesweeperPanel");
+		if (rowMax < 3)	throw new IndexOutOfBoundsException("Illegal maximum number of rows: " + rowMax);
+		else			this.rowMax = rowMax;
+		if (colMax < 3)	throw new IndexOutOfBoundsException("Illegal maximun number of columns: " + colMax);
+		else			this.colMax = rowMax;
 		if (numBombs > this.rowMax * this.colMax - 1 || numBombs < 1)
 			throw new IllegalArgumentException("Illegal number of bombs: " + numBombs);
-		
-		else
-			this.numBombs = numBombs;
+		else	this.numBombs = numBombs;
 		
 		this.revealableTile = (this.rowMax * this.colMax) - this.numBombs;
-		
 		this.board = new Tile[this.rowMax][this.colMax];
 		
 		this.createBoard();
 		this.reset();
+	}
+	
+	/**
+	 * Checks if the game is won.
+	 */
+	private void checkGameOver() {
+		if (this.isGameOver) return;
+		if (this.revealableTile != this.numReveal) return;
+		if (this.timer.isRunning) this.setTimer();
+		JTextArea jta = new JTextArea("You Win!\n" + this.panel.getTimeLabel().getText());
+		jta.setOpaque(false);
+		JOptionPane.showMessageDialog(null, jta, "Congradulations!", JOptionPane.PLAIN_MESSAGE, null);
+		this.setGameOver(true);
+	}
+	
+	/**
+	 * Count the number of bombs directly surrounding a tile.
+	 * 
+	 * @param tile is the center tile
+	 * 
+	 * @return the number of bombs directly surrounding {@code tile}.
+	 */
+	private int count(Tile tile) {
+		int count = 0;
+		
+		for (int i = tile.getRow() - 1; i < tile.getRow() + 2; i++) {
+			for (int j = tile.getCol() - 1; j < tile.getCol() + 2; j++) {
+				try {
+					count += this.board[i][j].isBomb() ? 1 : 0;
+				} catch (ArrayIndexOutOfBoundsException aioobe) {
+					continue;
+				}
+			}
+		} return tile.setCount(count);
+	}
+	
+	/**
+	 * Place all {@link Tile} into {@link #board}
+	 */
+	private void createBoard() {
+		for (int i = 0; i < this.board.length; i++) {
+			for (int j = 0; j < this.board[i].length; j++) {
+				this.board[i][j] = new Tile(this.panel, i, j);
+			}
+		}
+	}
+	
+	/**
+	 * Decrement the number of flags.
+	 */
+	public void decFlagCount() {
+		this.numFlag--;
+		this.panel.updateBLabel();
+	}
+	
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)							return true;
+		if (!(obj instanceof MinesweeperBoard))		return false;
+		MinesweeperBoard other = (MinesweeperBoard) obj;
+		if (!Arrays.deepEquals(board, other.board))	return false;
+		if (colMax != other.colMax)					return false;
+		if (isGameOver != other.isGameOver)			return false;
+		if (numBombs != other.numBombs)				return false;
+		if (numFlag != other.numFlag)				return false;
+		if (numReveal != other.numReveal) 			return false;
+		if (panel == null) if (other.panel != null)	return false;
+		else if (!panel.equals(other.panel))		return false;
+		if (revealableTile != other.revealableTile)	return false;
+		if (rowMax != other.rowMax)					return false;
+		if (timer == null) if (other.timer != null)	return false;
+		else if (!timer.equals(other.timer))		return false;
+		return true;
 	}
 	
 	/**
@@ -127,50 +215,12 @@ public class MinesweeperBoard {
 	}
 	
 	/**
-	 * Returns {@link Tile} of {@link #board} located at ({@code row}, {@code col}).
-	 * 
-	 * @param row is the row of {@code Tile}
-	 * @param col is the column of {@code Tile}
-	 * @return {@link Tile} at position ({@code row}, {@code col}).
-	 */
-	public Tile getTile(int row, int col) {
-		return this.board[row][col];
-	}
-	
-	/**
-	 * Determine the maximum number of rows.
-	 * 
-	 * @return {@link #rowMax}
-	 */
-	public int getRowMax() {
-		return this.rowMax;
-	}
-	
-	/**
 	 * Determine the maximum number of columns.
 	 * 
 	 * @return {@link #colMax}
 	 */
 	public int getColMax() {
 		return this.colMax;
-	}
-	
-	/**
-	 * Determine the number of {@link Tile} that can be revealed.
-	 * 
-	 * @return {@link #revealableTile}
-	 */
-	public int getRevealableTile() {
-		return this.revealableTile;
-	}
-	
-	/**
-	 * Determine the number of {@link Tile} that have been revealed.
-	 * 
-	 * @return {@link #numReveal}
-	 */
-	public int getNumReveal() {
-		return this.numReveal;
 	}
 	
 	/**
@@ -192,230 +242,41 @@ public class MinesweeperBoard {
 	}
 	
 	/**
-	 * Set {@link #isGameOver} to {@code isGameOver}.
+	 * Determine the number of {@link Tile} that have been revealed.
 	 * 
-	 * @param isGameOver is the new value.
+	 * @return {@link #numReveal}
 	 */
-	public void setGameOver(boolean isGameOver) {
-		this.isGameOver = isGameOver;
+	public int getNumReveal() {
+		return this.numReveal;
 	}
 	
 	/**
-	 * Increment the number of {@link Tile} that have been <i>revealed</i>.
+	 * Determine the number of {@link Tile} that can be revealed.
 	 * 
+	 * @return {@link #revealableTile}
 	 */
-	public void updateTileReveal() {
-		this.numReveal++;
+	public int getRevealableTile() {
+		return this.revealableTile;
 	}
 	
 	/**
-	 * Decrement the number of flags.
-	 */
-	public void decFlagCount() {
-		this.numFlag--;
-		this.panel.updateBLabel();
-	}
-	
-	/**
-	 * Increment the number of flags.
-	 */
-	public void incFlagCount() {
-		this.numFlag++;
-		this.panel.updateBLabel();
-	}
-	
-	/**
-	 * Creates a new game.
-	 */
-	public void reset() {
-		if (this.timer.isRunning) {
-			this.setTimer();
-		}
-		
-		this.isGameOver = false;
-		this.numFlag = this.numBombs;
-		this.numReveal = 0;
-		
-		for (Tile[] row : this.board) {
-			for (Tile tile : row) {
-				tile.reset();
-			}
-		}
-		
-		for (int i = 0; i < this.numBombs; i++) {
-			int x = rand.nextInt(this.rowMax), y = rand.nextInt(this.colMax);
-			while (this.board[x][y].isBomb()) {
-				x = rand.nextInt(this.rowMax); y = rand.nextInt(this.colMax);
-			}
-			this.board[x][y].setBomb(true);
-		}
-	}
-	
-	/**
-	 * Reveal {@code tile}
+	 * Determine the maximum number of rows.
 	 * 
-	 * @param tile is the {@link Tile} to reveal
+	 * @return {@link #rowMax}
 	 */
-	public void reveal(Tile tile) {
-		if (tile.isFlagged()) {
-			return;
-		}
-		
-		if (tile.isRevealed()) {
-			return;
-		}
-		
-		if (this.isGameOver) {
-			return;
-		}
-		
-		if (tile.isBomb()) {
-			JOptionPane.showMessageDialog(null, "Game Over", "Game Over!", JOptionPane.PLAIN_MESSAGE, null);
-			tile.setBackground(Color.RED);
-			this.revealBomb();
-			if (this.timer.isRunning) {
-				this.setTimer();
-			}
-			return;
-		}
-		
-		if (!this.timer.isRunning) {
-			this.setTimer();
-		}
-		
-		tile.setRevealed(true);
-		tile.setBorder(BorderFactory.createLoweredBevelBorder());
-		this.updateTileReveal();
-		
-		if (this.count(tile) != 0) {
-			tile.setIcon(Tile.numbers[tile.getCount()]);
-		}
-		
-		else {
-			this.specialReveal(tile);
-		}
-		
-		this.checkGameOver();
+	public int getRowMax() {
+		return this.rowMax;
 	}
 	
 	/**
-	 * Count the number of bombs directly surrounding a tile.
+	 * Returns {@link Tile} of {@link #board} located at ({@code row}, {@code col}).
 	 * 
-	 * @param tile is the center tile
-	 * 
-	 * @return the number of bombs directly surrounding {@code tile}.
+	 * @param row is the row of {@code Tile}
+	 * @param col is the column of {@code Tile}
+	 * @return {@link Tile} at position ({@code row}, {@code col}).
 	 */
-	private int count(Tile tile) {
-		int count = 0;
-		
-		for (int i = tile.getRow() - 1; i < tile.getRow() + 2; i++) {
-			for (int j = tile.getCol() - 1; j < tile.getCol() + 2; j++) {
-				try {
-					count += this.board[i][j].isBomb() ? 1 : 0;
-				}
-				
-				catch (ArrayIndexOutOfBoundsException aioobe) {
-					continue;
-				}
-			}
-		}
-		
-		return tile.setCount(count);
-	}
-	
-	/**
-	 * Reveal all {@link Tile} directly surrounding {@code tile}.
-	 * 
-	 * @param tile is the center tile.
-	 */
-	private void specialReveal(Tile tile) {
-		for (int i = tile.getRow() - 1; i < tile.getRow() + 2; i++) {
-			for (int j = tile.getCol() - 1; j < tile.getCol() + 2; j++) {
-				try {
-					if (! (tile.getRow() == i && tile.getCol() == j)) {
-						this.reveal(board[i][j]);
-					}
-				}
-				
-				catch (ArrayIndexOutOfBoundsException aioobe) {
-					continue;
-				}
-			}
-		}
-	}
-	
-	/**
-	 * Reveals the locations of all bombs on {@link #board}
-	 */
-	private void revealBomb() {
-		this.isGameOver = true;
-		this.panel.m.gameOver();
-		ImageIcon bombIcon	= Tile.bomb;
-		ImageIcon inc		= Tile.incorrectFlag;
-		for (Tile[] row : this.board) {
-			for (Tile tile : row) {
-				if (tile.isBomb()) {
-					tile.setIcon(bombIcon);
-				}
-				
-				if (tile.isFlagged() && ! tile.isBomb()) {
-					tile.setIcon(inc);
-				}
-				
-				else {
-					continue;
-				}
-			}
-		}
-		return;
-	}
-	
-	/**
-	 * Checks if the game is won.
-	 */
-	private void checkGameOver() {
-		if (! this.isGameOver)
-			if (this.revealableTile == this.numReveal) {
-				if (this.timer.isRunning) 
-					this.setTimer();
-				JTextArea jta = new JTextArea("You Win!\n" + this.panel.getTimeLabel().getText());
-				jta.setOpaque(false);
-				JOptionPane.showMessageDialog(null, jta, "Congradulations!", JOptionPane.PLAIN_MESSAGE, null);
-				this.setGameOver(true);
-			}
-	}
-	
-	/**
-	 * Place all {@link Tile} into {@link #board}
-	 */
-	private void createBoard() {
-		for (int i = 0; i < this.board.length; i++) {
-			for (int j = 0; j < this.board[i].length; j++) {
-				this.board[i][j] = new Tile(this.panel, i, j);
-			}
-		}
-	}
-	
-	/**
-	 * Create {@link #timer}
-	 */
-	private void setTimer() {
-		if (this.timer.isRunning) {
-			this.timer.isRunning = false;
-			this.timer.cancel();
-		}
-		
-		else {
-			this.timer = new MTimer("Timer");
-			TimerTask task = new TimerTask() {
-				@Override
-				public void run() {
-					MinesweeperBoard.this.panel.updateTLabel(++MinesweeperBoard.this.timer.time);
-				}
-			};
-			this.timer.isRunning = true;
-			this.timer.schedule(task, 0L, 0x3E8L);
-		}
+	public Tile getTile(int row, int col) {
+		return this.board[row][col];
 	}
 	
 	@Override
@@ -434,99 +295,143 @@ public class MinesweeperBoard {
 		result = prime * result + ((timer == null) ? 0 : timer.hashCode());
 		return result;
 	}
+	
+	/**
+	 * Increment the number of flags.
+	 */
+	public void incFlagCount() {
+		this.numFlag++;
+		this.panel.updateBLabel();
+	}
+	
+	/**
+	 * Creates a new game.
+	 */
+	public void reset() {
+		if (this.timer.isRunning) this.setTimer();
+		
+		this.isGameOver = false;
+		this.numFlag = this.numBombs;
+		this.numReveal = 0;
+		
+		for (Tile[] row : this.board) {
+			for (Tile tile : row) {
+				tile.reset();
+			}
+		} for (int i = 0; i < this.numBombs; i++) {
+			int x = rand.nextInt(this.rowMax), y = rand.nextInt(this.colMax);
+			while (this.board[x][y].isBomb()) {
+				x = rand.nextInt(this.rowMax); y = rand.nextInt(this.colMax);
+			} this.board[x][y].setBomb(true);
+		}
+	}
+	
+	/**
+	 * Reveal {@code tile}
+	 * 
+	 * @param tile is the {@link Tile} to reveal
+	 */
+	public void reveal(Tile tile) {
+		if (tile.isFlagged())	return;
+		if (tile.isRevealed())	return;
+		if (this.isGameOver)	return;
+		
+		if (tile.isBomb()) {
+			JOptionPane.showMessageDialog(null, "Game Over", "Game Over!", JOptionPane.PLAIN_MESSAGE, null);
+			tile.setBackground(Color.RED);
+			this.revealBomb();
+			if (this.timer.isRunning) this.setTimer();
+			return;
+		} if (!this.timer.isRunning) this.setTimer();
+		
+		tile.setRevealed(true);
+		tile.setBorder(BorderFactory.createLoweredBevelBorder());
+		this.updateTileReveal();
+		
+		if (this.count(tile) != 0) tile.setIcon(Tile.numbers[tile.getCount()]);
+		else this.specialReveal(tile);
+		
+		this.checkGameOver();
+	}
+	
+	/**
+	 * Reveals the locations of all bombs on {@link #board}
+	 */
+	private void revealBomb() {
+		this.isGameOver = true;
+		this.panel.m.gameOver();
+		ImageIcon bombIcon	= Tile.bomb;
+		ImageIcon inc		= Tile.incorrectFlag;
+		for (Tile[] row : this.board) {
+			for (Tile tile : row) {
+				if (tile.isBomb())	tile.setIcon(bombIcon);
+				if (tile.isFlagged() && !tile.isBomb()) tile.setIcon(inc);
+				else continue;
+			}
+		} return;
+	}
+	
+	/**
+	 * Set {@link #isGameOver} to {@code isGameOver}.
+	 * 
+	 * @param isGameOver is the new value.
+	 */
+	public void setGameOver(boolean isGameOver) {
+		this.isGameOver = isGameOver;
+	}
+	
+	/**
+	 * Create {@link #timer}
+	 */
+	private void setTimer() {
+		if (this.timer.isRunning) {
+			this.timer.isRunning = false;
+			this.timer.cancel();
+		} else {
+			this.timer = new MTimer("Timer");
+			TimerTask task = new TimerTask() {
+				@Override
+				public void run() {
+					MinesweeperBoard.this.panel.updateTLabel(++MinesweeperBoard.this.timer.time);
+				}
+			};
+			this.timer.isRunning = true;
+			this.timer.schedule(task, 0L, 0x3E8L);
+		}
+	}
 
-	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof MinesweeperBoard)) {
-			return false;
-		}
-		MinesweeperBoard other = (MinesweeperBoard) obj;
-		if (!Arrays.deepEquals(board, other.board)) {
-			return false;
-		}
-		if (colMax != other.colMax) {
-			return false;
-		}
-		if (isGameOver != other.isGameOver) {
-			return false;
-		}
-		if (numBombs != other.numBombs) {
-			return false;
-		}
-		if (numFlag != other.numFlag) {
-			return false;
-		}
-		if (numReveal != other.numReveal) {
-			return false;
-		}
-		if (panel == null) {
-			if (other.panel != null) {
-				return false;
+	/**
+	 * Reveal all {@link Tile} directly surrounding {@code tile}.
+	 * 
+	 * @param tile is the center tile.
+	 */
+	private void specialReveal(Tile tile) {
+		for (int i = tile.getRow() - 1; i < tile.getRow() + 2; i++) {
+			for (int j = tile.getCol() - 1; j < tile.getCol() + 2; j++) {
+				try {
+					if (!(tile.getRow() == i && tile.getCol() == j)) this.reveal(board[i][j]);
+				} catch (ArrayIndexOutOfBoundsException aioobe) {
+					continue;
+				}
 			}
-		} else if (!panel.equals(other.panel)) {
-			return false;
 		}
-		if (revealableTile != other.revealableTile) {
-			return false;
-		}
-		if (rowMax != other.rowMax) {
-			return false;
-		}
-		if (timer == null) {
-			if (other.timer != null) {
-				return false;
-			}
-		} else if (!timer.equals(other.timer)) {
-			return false;
-		}
-		return true;
 	}
 
 	@Override
 	public String toString() {
 		String str = "";
-		
 		for (Tile[] row : this.board) {
 			for (Tile tile : row) {
 				str += tile.getCount() + "\t";
-			}
-			str += "\n";
+			} str += "\n";
 		}
-		
 		return str;
 	}
 	
 	/**
-	 * This {@code MTimer} class is a private class that handles the {@link Timer}.
-	 * 
-	 * @version 18 March 2020
-	 * @author MrPineapple065
+	 * Increment the number of {@link Tile} that have been <i>revealed</i>.
 	 */
-	private class MTimer extends Timer {
-		/**
-		 * The amount of seconds that have elapsed since the start of the timer.
-		 */
-		public int time;
-		
-		/**
-		 * A boolean determining if this is running.
-		 */
-		public boolean isRunning;
-		
-		/**
-		 * Create a {@code Mtimer} with {@code name}
-		 * 
-		 * @param  name the name of the associated thread
-		 * 
-		 * @throws NullPointerException if {@link Timer#Timer(String)} throws
-		 */
-		public MTimer(String name) throws NullPointerException {
-			super(name);
-			this.time = 0;
-			this.isRunning = false;
-		}
+	public void updateTileReveal() {
+		this.numReveal++;
 	}
 }

@@ -23,23 +23,19 @@ public class Minesweeper {
 		
 		MinesweeperPanel panel = null;
 		
-		switch (JOptionPane.showOptionDialog(null, "Choose Dificulty", "", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[] {"Easy", "Medium", "Hard", "Custom", "Cancel" },  2)) {
-		
+		switch (JOptionPane.showOptionDialog(null, "Choose Dificulty", "", JOptionPane.OK_OPTION, JOptionPane.PLAIN_MESSAGE, null, new String[] {"Easy", "Medium", "Hard", "Custom", "Cancel" }, 2)) {
 		case 0:
 			panel = new MinesweeperPanel(9, 9, 10);
 			frame.add(panel);
 			break;
-			
 		case 1:
 			panel = new MinesweeperPanel(16, 16, 40);
 			frame.add(panel);
 			break;
-			
 		case 2:
 			panel = new MinesweeperPanel(16, 30, 99);
 			frame.add(panel);
 			break;
-		
 		case 3:
 			JPanel jp = new JPanel();
 			jp.setLayout(new GridLayout(3,2));
@@ -62,26 +58,19 @@ public class Minesweeper {
 			
 			while (fail) {
 				switch (JOptionPane.showConfirmDialog(null, jp, "", JOptionPane.OK_CANCEL_OPTION)) {
-				
 				case JOptionPane.OK_OPTION:
 					try {
 						panel = new MinesweeperPanel(Integer.parseInt(row.getText()), Integer.parseInt(col.getText()), Integer.parseInt(bomb.getText()));
 						frame.add(panel);
 						fail = false;
-					}
-					
-					catch (IllegalArgumentException iae) {
+					} catch (IllegalArgumentException iae) {
 						JOptionPane.showMessageDialog(null, "Try again", "", JOptionPane.ERROR_MESSAGE, null);
-					}
-					
-					break;
-					
+					} break;
 				default:
 					System.exit(0);
+					break;
 				}
-			}
-			break;
-			
+			} break;
 		default:
 			System.exit(0);
 		}
@@ -95,11 +84,8 @@ public class Minesweeper {
 			@Override
 			public void windowClosing(WindowEvent we) {
 		        switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to exit?", "Careful!", JOptionPane.YES_NO_OPTION, JOptionPane.ERROR_MESSAGE, null)) {
-
 		        case JOptionPane.YES_OPTION:
 		            System.exit(0);
-		            break;
-		        
 		        default:
 		        	break;
 		        }

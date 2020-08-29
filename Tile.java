@@ -7,6 +7,7 @@ import java.awt.event.MouseEvent;
 import java.awt.event.MouseListener;
 import java.io.File;
 import java.io.IOException;
+import java.util.Objects;
 import java.util.function.Function;
 
 import javax.imageio.ImageIO;
@@ -49,22 +50,39 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	/**
 	 * A {@link ImageIcon} holding the {@code ImageIcon} for the bomb.
 	 */
-	public static final ImageIcon	bomb			= f.apply("bomb.png");
+	public static final ImageIcon bomb			= f.apply("bomb.png");
 	
 	/**
 	 * A {@link ImageIcon} holding the {@code ImageIcon} for an incorrectly flagged {@link Tile}.
 	 */
-	public static final ImageIcon	incorrectFlag	= f.apply("incorrectFlag.png");
+	public static final ImageIcon incorrectFlag	= f.apply("incorrectFlag.png");
 	
 	/**
 	 * A {@link ImageIcon} holding the {@code ImageIcon} for the flag.
 	 */
-	private static final ImageIcon	flag			= f.apply("flag.png");
+	private static final ImageIcon flag			= f.apply("flag.png");
 	
 	/**
 	 * A reference holding a {@link Color} that every Tile will be.
 	 */
-	private static final Color		color = new Color(0xBDBDBD);
+	private static final Color color = new Color(0xBDBDBD);
+	
+	static {
+		UIManager.put("TextArea.font", new Font("Arial", Font.PLAIN, 30));
+		try {
+			Tile.numbers[1] = new ImageIcon(ImageIO.read(new File("one.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[2] = new ImageIcon(ImageIO.read(new File("two.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[3] = new ImageIcon(ImageIO.read(new File("three.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[4] = new ImageIcon(ImageIO.read(new File("four.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[5] = new ImageIcon(ImageIO.read(new File("five.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[6] = new ImageIcon(ImageIO.read(new File("six.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[7] = new ImageIcon(ImageIO.read(new File("seven.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+			Tile.numbers[8] = new ImageIcon(ImageIO.read(new File("eight.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
+		} catch (IOException ioe) {
+			ioe.printStackTrace();
+			System.exit(0);
+		}
+	}
 	
 	/**
 	 * The {@link MinesweeperPanel} holding this.
@@ -101,41 +119,17 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	 */
 	private boolean isRevealed;
 	
-	static {
-		UIManager.put("TextArea.font"		, new Font("Arial", Font.PLAIN, 30));
-		try {
-			Tile.numbers[1] = new ImageIcon(ImageIO.read(new File("one.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[2] = new ImageIcon(ImageIO.read(new File("two.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[3] = new ImageIcon(ImageIO.read(new File("three.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[4] = new ImageIcon(ImageIO.read(new File("four.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[5] = new ImageIcon(ImageIO.read(new File("five.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[6] = new ImageIcon(ImageIO.read(new File("six.png"		)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[7] = new ImageIcon(ImageIO.read(new File("seven.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-			Tile.numbers[8] = new ImageIcon(ImageIO.read(new File("eight.png"	)).getScaledInstance(32, 32, Image.SCALE_SMOOTH));
-		}
-		
-		catch (IOException ioe) {
-			ioe.printStackTrace();
-			System.exit(0);
-		}
-	}
-	
 	/**
 	 * Creates a {@code Tile} with row, col, panel.getBoard(), and panel defined.
 	 * 
 	 * @param panel is the {@link MinesweeperPanel} holding this.
-	 * @param row	is the {@link Tile#row}
-	 * @param col	is the {@link Tile#col}
+	 * @param row	is the {@link #row}
+	 * @param col	is the {@link #col}
 	 */
 	public Tile(MinesweeperPanel panel, int row, int col) {
 		super(null, null);
 		
-		if (panel == null)
-			throw new IllegalArgumentException("Tile must be on MinesweeperPanel");
-		
-		else
-			this.panel = panel;
-		
+		this.panel = Objects.requireNonNull(panel, "Tile must be on MinesweeperPanel");
 		this.row = row; this.col = col;
 		
 		//Set Default GUI Elements
@@ -151,45 +145,23 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 		this.requestFocusInWindow();
 	}
 	
-	/**
-	 * Determine if this is flagged.
-	 * 
-	 * @return {@link Tile#isFlagged}
-	 */
-	public boolean isFlagged() {
-		return this.isFlagged;
+	@Override
+	public boolean equals(Object obj) {
+		if (this == obj)							return true;
+		if (!(obj instanceof Tile))					return false;
+		Tile other = (Tile) obj;
+		if (col != other.col)						return false;
+		if (count != other.count)					return false;
+		if (isBomb != other.isBomb) 				return false;
+		if (isFlagged != other.isFlagged)			return false;
+		if (isRevealed != other.isRevealed) 		return false;
+		if (panel == null) if (other.panel != null) return false;
+		else if (!panel.equals(other.panel))		return false;
+		if (row != other.row) 						return false;
+		return true;
 	}
 	
 	/**
-	 * Determine if this is a bomb.
-	 * 
-	 * @return {@link Tile#isBomb}
-	 */
-	public boolean isBomb() {
-		return isBomb;
-	}
-	
-	/**
-	 * Determined if this is revealed
-	 * 
-	 * @return {@link Tile#isRevealed}
-	 */
-	public boolean isRevealed() {
-		return this.isRevealed;
-	}
-	
-	/**
-	 * Determine the row that this is in.
-	 * 
-	 * @return {@link #row}
-	 */
-	public int getRow() {
-		return this.row;
-	}
-	
-	/**
-	 * Determine the column that this is in.
-	 * 
 	 * @return {@link #col}
 	 */
 	public int getCol() {
@@ -197,67 +169,17 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 	}
 	
 	/**
-	 * Determine the number of bombs surrounding this.
-	 * 
 	 * @return {@link #count}
 	 */
 	public int getCount() {
 		return this.count;
 	}
 	
-	
 	/**
-	 * Set {@link #isFlagged} to {@code isFlagged}
-	 * 
-	 * @param isFlagged	new {@link #isFlagged} value.
+	 * @return {@link #row}
 	 */
-	public void setFlagged(boolean isFlagged) {
-		this.isFlagged = isFlagged;
-	}
-	
-	/**
-	 * Toggle {@link #isFlagged}
-	 */
-	public void toggleFlagged() {
-		this.isFlagged ^= true;
-	}
-	
-	/**
-	 * Set {@link #isBomb} to {@code isBomb}
-	 * 
-	 * @param isBomb	new {@link #isBomb} value.
-	 */
-	public void setBomb(boolean isBomb) {
-		this.isBomb = isBomb;
-	}
-	
-	/**
-	 * Set {@link #isRevealed} to {@code isRevealed}
-	 * 
-	 * @param isRevealed	new {@link #isRevealed} value.
-	 */
-	public void setRevealed(boolean isRevealed) {
-		this.isRevealed = isRevealed;
-	}
-	
-	/**
-	 * Set {@link #count}
-	 * 
-	 * @param count is the new {@code count}.
-	 * 
-	 * @return the new value.
-	 */
-	public int setCount(int count) {
-		this.count = count; return this.count;
-	}
-	
-	/**
-	 * Reset Tile
-	 */
-	public void reset() {
-		this.setBorder(BorderFactory.createRaisedBevelBorder());
-		this.isFlagged = false; this.isBomb = false; this.isRevealed = false;
-		this.setIcon(null);	this.setBackground(color);
+	public int getRow() {
+		return this.row;
 	}
 	
 	@Override
@@ -274,158 +196,158 @@ public class Tile extends JButton implements MouseListener, KeyListener {
 		return result;
 	}
 	
+	/**
+	 * @return {@link Tile#isBomb}
+	 */
+	public boolean isBomb() {
+		return isBomb;
+	}
+	
+	
+	/**
+	 * @return {@link Tile#isFlagged}
+	 */
+	public boolean isFlagged() {
+		return this.isFlagged;
+	}
+	
+	/**
+	 * @return {@link Tile#isRevealed}
+	 */
+	public boolean isRevealed() {
+		return this.isRevealed;
+	}
+	
 	@Override
-	public boolean equals(Object obj) {
-		if (this == obj) {
-			return true;
-		}
-		if (!(obj instanceof Tile)) {
-			return false;
-		}
-		Tile other = (Tile) obj;
-		if (col != other.col) {
-			return false;
-		}
-		if (count != other.count) {
-			return false;
-		}
-		if (isBomb != other.isBomb) {
-			return false;
-		}
-		if (isFlagged != other.isFlagged) {
-			return false;
-		}
-		if (isRevealed != other.isRevealed) {
-			return false;
-		}
-		if (panel == null) {
-			if (other.panel != null) {
-				return false;
+	public void keyPressed(KeyEvent e) {return;}
+	
+	@Override
+	public void keyReleased(KeyEvent e) {return;}
+	
+	@Override
+	public void keyTyped(KeyEvent e) {
+		switch (e.getKeyChar()) {
+		case KeyEvent.VK_ESCAPE:
+			this.panel.m.actionPerformed(null);
+			return;
+		case 'r':
+			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to reset?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
+			case JOptionPane.YES_OPTION:
+				this.panel.m.reset();
+				this.panel.getBoard().reset();
+			default:
+				return;
 			}
-		} else if (!panel.equals(other.panel)) {
-			return false;
-		}
-		if (row != other.row) {
-			return false;
-		}
-		return true;
+		case 'q':
+			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to quit?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
+			case JOptionPane.YES_OPTION:
+				System.exit(0);
+			default:
+				return;
+			}
+		}	
 	}
-
-	@Override
-	public String toString() {
-		return String.format("(%s, %s)", String.valueOf(this.row), String.valueOf(this.col));
-	}
-
+	
 	@Override
 	public void mouseClicked(MouseEvent e) {
 		switch (e.getButton()) {
-		
-		/**Left Click*/
 		case MouseEvent.BUTTON1:
 			this.panel.getBoard().reveal(this);
-			break;
-			
-		/**Middle Clicl*/
-		case MouseEvent.BUTTON2:
-			String tileText = this.getText();
-			if (("".equals(tileText)) || ! ((this.toString()).equals(tileText))) {
-				this.setForeground(new Color(0x333333));
-				this.setText(this.toString());
-			}
-			
-			else {
-				this.setIcon(this.count == 0 ? null : Tile.numbers[this.count]);
-				this.setText(this.count == 0 ? null : String.valueOf(this.count));
-			}
-			break;
-			
-			
-		/**Right Click*/
+			return;
 		case MouseEvent.BUTTON3:
-			if (this.isRevealed)
-				break;
-			
-			if (this.panel.getBoard().getGameOver())
-				break;
-			
+			if (this.isRevealed) return;
+			if (this.panel.getBoard().getGameOver()) return;
 			if (this.isFlagged) {
 				this.setIcon(null);
 				this.setForeground(null);
 				this.panel.getBoard().incFlagCount();
 				this.toggleFlagged();
-			}
-			
-			else {
+			} else {
 				this.setIcon(flag);
 				this.panel.getBoard().decFlagCount();
 				this.toggleFlagged();
-			}
-			break;
+			} return;
+		default:
+			return;
 		}
 	}
+	
+	@Override
+	public void mouseEntered(MouseEvent e)	{return;}
+	
+	@Override
+	public void mouseExited(MouseEvent e)	{return;}
 
 	@Override
 	public void mousePressed(MouseEvent e) {
-		if (this.panel.getBoard().getGameOver())
-			return;
-		
+		if (this.panel.getBoard().getGameOver()) return;
 		this.getModel().setPressed(true);
 		this.panel.m.click();
 	}
 
 	@Override
 	public void mouseReleased(MouseEvent e) {
-		if (this.panel.getBoard().getGameOver())
-			return;
-		
+		if (this.panel.getBoard().getGameOver()) return;
 		this.getModel().setPressed(false);
 		this.panel.m.reset();
 	}
 
-	@Override
-	public void mouseEntered(MouseEvent e)	{return;}
+	/**
+	 * Reset Tile
+	 */
+	public void reset() {
+		this.setBorder(BorderFactory.createRaisedBevelBorder());
+		this.isFlagged = false; this.isBomb = false; this.isRevealed = false;
+		this.setIcon(null);	this.setBackground(color);
+	}
 
-	@Override
-	public void mouseExited(MouseEvent e)	{return;}
+	/**
+	 * Set {@link #isBomb} to {@code isBomb}
+	 * 
+	 * @param isBomb new {@link #isBomb} value.
+	 */
+	public void setBomb(boolean isBomb) {
+		this.isBomb = isBomb;
+	}
 
-	@Override
-	public void keyTyped(KeyEvent e) {
-		switch (e.getKeyChar()) {
-		case KeyEvent.VK_ESCAPE:
-			this.panel.m.actionPerformed(null);
-			break;
-			
-		case 'r':
-			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to reset?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
-			
-			case JOptionPane.YES_OPTION:
-				this.panel.m.reset();
-				this.panel.getBoard().reset();
-				break;
-				
-			default:
-				break;
-			}
-			break;
-			
-		case 'q':
-			switch (JOptionPane.showConfirmDialog(null, "Are you sure you want to quit?", "", JOptionPane.YES_NO_OPTION, JOptionPane.PLAIN_MESSAGE, null)) {
-			
-			case JOptionPane.YES_OPTION:
-				System.exit(0);
-				break;
-				
-			default:
-				break;
-			}
-			break;
-		}
-		
+	/**
+	 * Set {@link #count}
+	 * 
+	 * @param count is the new {@code count}.
+	 * 
+	 * @return the new value.
+	 */
+	public int setCount(int count) {
+		this.count = count; return this.count;
+	}
+
+	/**
+	 * Set {@link #isFlagged} to {@code isFlagged}
+	 * 
+	 * @param isFlagged	new {@link #isFlagged} value.
+	 */
+	public void setFlagged(boolean isFlagged) {
+		this.isFlagged = isFlagged;
+	}
+
+	/**
+	 * Set {@link #isRevealed} to {@code isRevealed}
+	 * 
+	 * @param isRevealed	new {@link #isRevealed} value.
+	 */
+	public void setRevealed(boolean isRevealed) {
+		this.isRevealed = isRevealed;
+	}
+
+	/**
+	 * Toggle {@link #isFlagged}
+	 */
+	public void toggleFlagged() {
+		this.isFlagged ^= true;
 	}
 
 	@Override
-	public void keyPressed(KeyEvent e) {return;}
-
-	@Override
-	public void keyReleased(KeyEvent e) {return;}
+	public String toString() {
+		return String.format("(%s, %s)", String.valueOf(this.row), String.valueOf(this.col));
+	}
 }
